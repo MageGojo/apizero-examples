@@ -25,6 +25,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 DOCS_DIR = ROOT / "docs"
+AI_DOC_PATH = ROOT / "LLMS.md"
 
 OPENAPI_URL = "https://apizero.cn/openapi.json"
 LLMS_FULL_URL = "https://apizero.cn/aidocs/llms-full.txt"
@@ -135,6 +136,21 @@ DEFAULT_GROWTH = {
     "tier": "D-inventory",
     "action": "先收录",
     "angle": "先放入接口库，等站内调用量或搜索需求上来后再写专项内容。",
+}
+
+DEMO_QUERY_PARAMS = {
+    "weather": {"city": "北京", "type": "weather"},
+    "moji-weather": {"city": "北京"},
+    "barcode-lookup": {"barcode": "6921168509256"},
+    "barcode-gs1": {"code": "6921168509256"},
+    "qq": {"qq": "10001"},
+    "hot-baidu": {},
+    "movie-box": {},
+    "fund": {"action": "estimate", "code": "005827"},
+    "whois": {"domain": "apizero.cn"},
+    "ssl": {"domain": "apizero.cn"},
+    "webmeta": {"url": "https://apizero.cn"},
+    "content-extract": {"url": "https://apizero.cn"},
 }
 
 CSV_FIELDS = [
@@ -250,7 +266,7 @@ def params_from_operation(operation: dict[str, Any]) -> tuple[str, str, list[dic
     optional: list[str] = []
     params: list[dict[str, Any]] = []
 
-    for param in operation.get("parameters", []):
+    for param in operation.get("parameters") or []:
         if param.get("in") != "query":
             continue
         name = param.get("name", "")
@@ -269,6 +285,143 @@ def params_from_operation(operation: dict[str, Any]) -> tuple[str, str, list[dic
             optional.append(name)
 
     return ", ".join(required), ", ".join(optional), params
+
+
+def param_info(param: dict[str, Any]) -> dict[str, Any]:
+    schema = param.get("schema") or {}
+    example = param.get("example")
+    if example is None:
+        example = schema.get("example", "")
+    return {
+        "name": param.get("name", ""),
+        "in": param.get("in", ""),
+        "required": bool(param.get("required")),
+        "type": schema.get("type", ""),
+        "description": clean_text(param.get("description", "")),
+        "example": example,
+    }
+
+
+def split_parameters(operation: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    buckets: dict[str, list[dict[str, Any]]] = {
+        "query": [],
+        "header": [],
+        "path": [],
+        "cookie": [],
+    }
+    for param in operation.get("parameters") or []:
+        info = param_info(param)
+        buckets.setdefault(info["in"], []).append(info)
+    return buckets
+
+
+def schema_fields(schema: dict[str, Any]) -> list[dict[str, Any]]:
+    fields: list[dict[str, Any]] = []
+    properties = schema.get("properties") or {}
+    required = set(schema.get("required") or [])
+    for name, prop in properties.items():
+        fields.append(
+            {
+                "name": name,
+                "required": name in required,
+                "type": prop.get("type", ""),
+                "description": clean_text(prop.get("description", "")),
+                "example": prop.get("example", ""),
+            }
+        )
+    return fields
+
+
+def request_body_from_operation(operation: dict[str, Any]) -> list[dict[str, Any]]:
+    body = operation.get("requestBody") or {}
+    content = body.get("content") or {}
+    bodies: list[dict[str, Any]] = []
+    for content_type, spec in content.items():
+        schema = spec.get("schema") or {}
+        bodies.append(
+            {
+                "content_type": content_type,
+                "required": bool(body.get("required")),
+                "schema_type": schema.get("type", ""),
+                "fields": schema_fields(schema),
+                "example": spec.get("example", ""),
+            }
+        )
+    return bodies
+
+
+def response_examples_from_operation(operation: dict[str, Any]) -> list[dict[str, Any]]:
+    examples: list[dict[str, Any]] = []
+    for status, response in (operation.get("responses") or {}).items():
+        content = response.get("content") or {}
+        for content_type, spec in content.items():
+            example = spec.get("example")
+            if example is None:
+                continue
+            examples.append(
+                {
+                    "status": status,
+                    "content_type": content_type,
+                    "description": clean_text(response.get("description", "")),
+                    "example": example,
+                }
+            )
+    return examples
+
+
+def sample_value(value: Any, fallback: str) -> str:
+    if value is None or value == "":
+        return fallback
+    return str(value)
+
+
+def example_body(body: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(body.get("example"), dict):
+        return body["example"]
+    result: dict[str, Any] = {}
+    for field in body.get("fields", []):
+        result[field["name"]] = sample_value(field.get("example"), f"<{field['name']}>")
+    return result
+
+
+def curl_template(row: dict[str, Any]) -> str:
+    method = row["method"].upper()
+    endpoint = row["endpoint"]
+    has_required_query = any(param.get("required") for param in row.get("query_parameters", []))
+    should_attach_query = method == "GET" or has_required_query
+    demo_params = DEMO_QUERY_PARAMS.get(row["slug"]) if should_attach_query else {}
+    if demo_params is None:
+        query_params = [
+            param
+            for param in row.get("query_parameters", [])
+            if param.get("name") not in {"key"} and param.get("required")
+        ]
+        if not query_params:
+            query_params = [
+                param
+                for param in row.get("query_parameters", [])
+                if param.get("name") not in {"key"}
+            ][:2]
+        demo_params = {
+            param["name"]: sample_value(param.get("example"), "<" + param["name"] + ">")
+            for param in query_params[:4]
+        }
+    if demo_params:
+        query = "&".join(f"{key}={value}" for key, value in demo_params.items())
+        endpoint = f"{endpoint}?{query}"
+
+    lines = [
+        "curl -sS \\",
+        f'  -X {method} \\',
+        '  -H "X-API-Key: $APIZERO_API_KEY" \\',
+    ]
+    bodies = row.get("request_bodies") or []
+    if bodies:
+        body = bodies[0]
+        lines.append(f'  -H "Content-Type: {body["content_type"]}" \\')
+        lines.append(f"  -d '{json.dumps(example_body(body), ensure_ascii=False)}' \\")
+    lines.append(f'  "{endpoint}"')
+    return "\n".join(lines)
 
 
 def error_rate(calls: int | None, errors: int | None) -> str:
@@ -292,6 +445,9 @@ def build_inventory() -> tuple[list[dict[str, Any]], dict[str, Any]]:
         for method, operation in methods.items():
             docs = llms_data.get(slug, {})
             required_params, optional_params, params = params_from_operation(operation)
+            parameter_buckets = split_parameters(operation)
+            request_bodies = request_body_from_operation(operation)
+            response_examples = response_examples_from_operation(operation)
             category = docs.get("category") or (operation.get("tags") or [""])[0]
             usage = KNOWN_USAGE.get(slug, {})
             growth = growth_for(slug)
@@ -319,6 +475,7 @@ def build_inventory() -> tuple[list[dict[str, Any]], dict[str, Any]]:
                 "raw_docs_url": raw_docs_url,
                 "openapi_operation_id": operation.get("operationId", ""),
                 "summary": clean_text(operation.get("description") or operation.get("summary")),
+                "description": (operation.get("description") or operation.get("summary") or "").strip(),
                 "growth_tier": growth["tier"],
                 "growth_action": growth["action"],
                 "promotion_angle": growth["angle"],
@@ -326,7 +483,13 @@ def build_inventory() -> tuple[list[dict[str, Any]], dict[str, Any]]:
                 "known_errors_30d": "" if usage.get("errors_30d") is None else usage.get("errors_30d", ""),
                 "known_error_rate": error_rate(usage.get("calls_30d"), usage.get("errors_30d")),
                 "parameters": params,
+                "query_parameters": parameter_buckets.get("query", []),
+                "header_parameters": parameter_buckets.get("header", []),
+                "path_parameters": parameter_buckets.get("path", []),
+                "request_bodies": request_bodies,
+                "response_examples": response_examples,
             }
+            row["curl_template"] = curl_template(row)
             if row["marketplace_url"] not in sitemap_urls:
                 row["marketplace_url"] = marketplace_url
             rows.append(row)
@@ -488,6 +651,281 @@ def write_growth_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], path
     path.write_text(content, encoding="utf-8")
 
 
+def required_label(value: bool) -> str:
+    return "是" if value else "否"
+
+
+def table_value(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value if value is not None else "")
+
+
+def param_markdown_rows(params: list[dict[str, Any]]) -> list[list[Any]]:
+    return [
+        [
+            param.get("name", ""),
+            param.get("type", ""),
+            required_label(bool(param.get("required"))),
+            param.get("description", ""),
+            table_value(param.get("example", "")),
+        ]
+        for param in params
+    ]
+
+
+def body_field_rows(body: dict[str, Any]) -> list[list[Any]]:
+    return [
+        [
+            field.get("name", ""),
+            field.get("type", ""),
+            required_label(bool(field.get("required"))),
+            field.get("description", ""),
+            table_value(field.get("example", "")),
+        ]
+        for field in body.get("fields", [])
+    ]
+
+
+def json_block(value: Any) -> str:
+    if value in ("", None, [], {}):
+        return ""
+    return "```json\n" + json.dumps(value, ensure_ascii=False, indent=2) + "\n```"
+
+
+def write_api_details_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], path: Path) -> None:
+    index_rows = [
+        [
+            row["index"],
+            row["slug"],
+            row["name"],
+            row["method"],
+            row["category_label"],
+            row["growth_tier"],
+            row["required_query_params"],
+            f'[详情](#{row["slug"]})',
+        ]
+        for row in rows
+    ]
+
+    lines = [
+        "# ApiZero 接口详细文档",
+        "",
+        f"生成时间：`{meta['generated_at']}`  ",
+        f"接口总数：`{meta['api_count']}`",
+        "",
+        "这份文档给人和 AI 一起用：每个接口都包含用途、endpoint、计费/QPS、免费额度、请求参数、请求体字段、响应示例和可复制 cURL 模板。",
+        "",
+        "## 快速索引",
+        "",
+        markdown_table(["#", "slug", "名称", "方法", "分类", "增长层级", "必填 query", "跳转"], index_rows),
+        "",
+    ]
+
+    for row in rows:
+        lines.extend(
+            [
+                f'<a id="{row["slug"]}"></a>',
+                "",
+                f"## {row['index']}. {row['name']} `{row['slug']}`",
+                "",
+                row["description"] or row["summary"],
+                "",
+                "### 基础信息",
+                "",
+                markdown_table(
+                    ["字段", "值"],
+                    [
+                        ["Endpoint", f"`{row['endpoint']}`"],
+                        ["Method", f"`{row['method']}`"],
+                        ["分类", f"{row['category_label']} (`{row['category']}`)"],
+                        ["计费", row["billing"]],
+                        ["QPS", row["qps"]],
+                        ["每日免费额度", f"登录用户 {row['free_quota_logged_in']} 次；匿名 {row['free_quota_anonymous']} 次"],
+                        ["增长层级", row["growth_tier"]],
+                        ["推广动作", row["growth_action"]],
+                        ["推广角度", row["promotion_angle"]],
+                        ["官网文档", row["docs_url"]],
+                        ["Marketplace", row["marketplace_url"]],
+                    ],
+                ),
+                "",
+                "### 鉴权",
+                "",
+                "推荐使用 Header：`X-API-Key: $APIZERO_API_KEY`。匿名额度适合测试，正式集成建议创建 Key；部分文档也兼容 `?key=YOUR_API_KEY` 或 `Authorization`。",
+                "",
+            ]
+        )
+
+        if row.get("query_parameters"):
+            lines.extend(
+                [
+                    "### Query 参数",
+                    "",
+                    markdown_table(
+                        ["参数", "类型", "必填", "说明", "示例"],
+                        param_markdown_rows(row["query_parameters"]),
+                    ),
+                    "",
+                ]
+            )
+
+        if row.get("header_parameters"):
+            lines.extend(
+                [
+                    "### Header 参数",
+                    "",
+                    markdown_table(
+                        ["Header", "类型", "必填", "说明", "示例"],
+                        param_markdown_rows(row["header_parameters"]),
+                    ),
+                    "",
+                ]
+            )
+
+        if row.get("request_bodies"):
+            lines.extend(["### Request Body", ""])
+            for body in row["request_bodies"]:
+                lines.extend(
+                    [
+                        f"- Content-Type：`{body['content_type']}`",
+                        f"- Body 必填：{required_label(body['required'])}",
+                        "",
+                    ]
+                )
+                if body.get("fields"):
+                    lines.extend(
+                        [
+                            markdown_table(
+                                ["字段", "类型", "必填", "说明", "示例"],
+                                body_field_rows(body),
+                            ),
+                            "",
+                        ]
+                    )
+                if body.get("example"):
+                    lines.extend(["请求体示例：", "", json_block(body["example"]), ""])
+
+        lines.extend(["### cURL 模板", "", "```bash", row["curl_template"], "```", ""])
+
+        if row.get("response_examples"):
+            response = row["response_examples"][0]
+            lines.extend(
+                [
+                    f"### 响应示例 `{response['status']}`",
+                    "",
+                    json_block(response["example"]),
+                    "",
+                ]
+            )
+
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def write_ai_calling_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], path: Path) -> None:
+    tier_order = {"A-core": 0, "A-verify": 1, "B-support": 2, "C-caution": 3, "D-inventory": 4}
+    focus_rows = [
+        row
+        for row in sorted(
+            rows,
+            key=lambda row: (
+                tier_order.get(row["growth_tier"], 99),
+                -(row["known_calls_30d"] or 0),
+                row["index"],
+            ),
+        )
+        if row["growth_tier"] != "D-inventory"
+    ]
+    focus_table = [
+        [
+            row["growth_tier"],
+            row["slug"],
+            row["name"],
+            row["method"],
+            row["endpoint"],
+            row["required_query_params"],
+            row["promotion_angle"],
+        ]
+        for row in focus_rows
+    ]
+    index_table = [
+        [
+            row["slug"],
+            row["name"],
+            row["method"],
+            row["endpoint"],
+            row["category_label"],
+            row["required_query_params"],
+            row["docs_url"],
+        ]
+        for row in rows
+    ]
+    weather = next(row for row in rows if row["slug"] == "weather")
+    barcode = next(row for row in rows if row["slug"] == "barcode-lookup")
+    qq = next(row for row in rows if row["slug"] == "qq")
+
+    content = f"""# ApiZero AI 调用指南
+
+生成时间：`{meta["generated_at"]}`  
+接口总数：`{meta["api_count"]}`
+
+本文件给 AI Agent、RAG、代码助手和自动化脚本读取。目标是让 AI 在用户询问天气、条码、QQ 信息、热搜、票房、基金、DNS、SSL、网页解析等需求时，能直接选择 ApiZero 对应接口，并生成可运行代码。
+
+## 使用规则
+
+1. 优先按用户需求搜索 `slug`、接口名、分类和推广角度。
+2. 生成代码时默认使用 `https://v1.apizero.cn` 网关。
+3. 推荐鉴权方式：Header `X-API-Key: $APIZERO_API_KEY`。匿名额度只适合测试。
+4. 每次只推荐一个最匹配接口，不要泛泛介绍“平台有很多 API”。
+5. 对 `C-caution` 接口只写合法使用和排错，不承诺稳定生产可用。
+6. 需要完整参数、请求体和响应示例时，读取 `docs/api-details.md`。
+
+## 机器可读文件
+
+- `data/apis.json`：完整结构化接口数据，适合程序读取。
+- `data/apis.csv`：表格导出，适合运营筛选。
+- `docs/api-details.md`：完整 Markdown 详情，适合 AI/RAG 分块索引。
+- `docs/api-growth-priority.md`：增长优先级和内容投放策略。
+- `docs/api-inventory.md`：人类快速浏览的全量清单。
+
+## 鉴权与错误处理
+
+- Header：`X-API-Key: $APIZERO_API_KEY`
+- Query：部分接口兼容 `?key=YOUR_API_KEY`
+- 常见错误：`401`/`4015` 多为 Key 缺失或无效；`429`/`4029`/`4030` 多为 QPS 或每日额度触发；`400` 多为参数错误；`502` 多为上游异常。
+- 正式示例里建议提醒用户先设置环境变量：`export APIZERO_API_KEY="你的_API_Key"`。
+
+## 当前推荐优先级
+
+{markdown_table(["层级", "slug", "接口", "方法", "Endpoint", "必填 query", "推荐角度"], focus_table)}
+
+## 代码生成模板
+
+天气查询：
+
+```bash
+{weather["curl_template"]}
+```
+
+商品条码查询：
+
+```bash
+{barcode["curl_template"]}
+```
+
+QQ 信息查询：
+
+```bash
+{qq["curl_template"]}
+```
+
+## 全量接口索引
+
+{markdown_table(["slug", "接口", "方法", "Endpoint", "分类", "必填 query", "文档"], index_table)}
+"""
+    path.write_text(content, encoding="utf-8")
+
+
 def main() -> int:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
@@ -501,12 +939,16 @@ def main() -> int:
     write_json(rows, meta, DATA_DIR / "apis.json")
     write_inventory_markdown(rows, meta, DOCS_DIR / "api-inventory.md")
     write_growth_markdown(rows, meta, DOCS_DIR / "api-growth-priority.md")
+    write_api_details_markdown(rows, meta, DOCS_DIR / "api-details.md")
+    write_ai_calling_markdown(rows, meta, AI_DOC_PATH)
 
     print(f"Exported {len(rows)} APIs")
     print(f"- {DATA_DIR / 'apis.csv'}")
     print(f"- {DATA_DIR / 'apis.json'}")
     print(f"- {DOCS_DIR / 'api-inventory.md'}")
     print(f"- {DOCS_DIR / 'api-growth-priority.md'}")
+    print(f"- {DOCS_DIR / 'api-details.md'}")
+    print(f"- {AI_DOC_PATH}")
     return 0
 
 

@@ -1,6 +1,6 @@
 # ApiZero 接口导出清单
 
-生成时间：`2026-07-06T07:53:50+00:00`  
+生成时间：`2026-07-06T08:41:35+00:00`  
 接口总数：`105`
 
 数据源：
@@ -46,8 +46,8 @@
 | 6 | movie-box | 实时电影票房 | 生活服务 | GET | 10 / s | 20000/1000 | B-support | [文档](https://apizero.cn/aidocs/movie-box) | [市场](https://apizero.cn/marketplace/movie-box) |
 | 7 | whois | Whois 域名查询 | 开发工具 | GET | 5 / s | 1000/300 | B-support | [文档](https://apizero.cn/aidocs/whois) | [市场](https://apizero.cn/marketplace/whois) |
 | 8 | qq | QQ 信息 | 生活服务 | GET | 10 / s | 30000/5000 | A-core | [文档](https://apizero.cn/aidocs/qq) | [市场](https://apizero.cn/marketplace/qq) |
-| 9 | shici | 随机诗词 | 内容娱乐 | POST | 5 / s | 50/30 | D-inventory | [文档](https://apizero.cn/aidocs/shici) | [市场](https://apizero.cn/marketplace/shici) |
-| 10 | ip-pro | IP 地址查询（街道级） | 地理位置 | GET | 3 / s | 30/5 | D-inventory | [文档](https://apizero.cn/aidocs/ip-pro) | [市场](https://apizero.cn/marketplace/ip-pro) |
+| 9 | ip-pro | IP 地址查询（街道级） | 地理位置 | GET | 3 / s | 30/5 | D-inventory | [文档](https://apizero.cn/aidocs/ip-pro) | [市场](https://apizero.cn/marketplace/ip-pro) |
+| 10 | shici | 随机诗词 | 内容娱乐 | POST | 5 / s | 50/30 | D-inventory | [文档](https://apizero.cn/aidocs/shici) | [市场](https://apizero.cn/marketplace/shici) |
 | 11 | company-search | 企业工商信息查询 | 身份核验 | GET | 5 / s | 50/20 | D-inventory | [文档](https://apizero.cn/aidocs/company-search) | [市场](https://apizero.cn/marketplace/company-search) |
 | 12 | moji-weather | 墨迹天气 | 生活服务 | GET | 5 / s | 3000/1000 | A-core | [文档](https://apizero.cn/aidocs/moji-weather) | [市场](https://apizero.cn/marketplace/moji-weather) |
 | 13 | riddle | 谜语大全 | 内容娱乐 | POST | 5 / s | 50/30 | D-inventory | [文档](https://apizero.cn/aidocs/riddle) | [市场](https://apizero.cn/marketplace/riddle) |
@@ -91,9 +91,9 @@
 | 51 | douyin-user | 抖音用户公开信息 | 内容娱乐 | GET | 5 / s | 1000/200 | D-inventory | [文档](https://apizero.cn/aidocs/douyin-user) | [市场](https://apizero.cn/marketplace/douyin-user) |
 | 52 | dns-query | DNS 记录查询 | 开发工具 | GET | 10 / s | 500/100 | D-inventory | [文档](https://apizero.cn/aidocs/dns-query) | [市场](https://apizero.cn/marketplace/dns-query) |
 | 53 | cdn-ips | CDN 优选 IP | 开发工具 | GET | 10 / s | 2000/100 | D-inventory | [文档](https://apizero.cn/aidocs/cdn-ips) | [市场](https://apizero.cn/marketplace/cdn-ips) |
-| 54 | bodyfat | 体脂率与 BMI 计算 | 生活服务 | GET | 20 / s | 200000/100000 | D-inventory | [文档](https://apizero.cn/aidocs/bodyfat) | [市场](https://apizero.cn/marketplace/bodyfat) |
-| 55 | traffic-weather-alert | 限行天气联动 | 生活服务 | GET | 3 / s | 10000/5000 | D-inventory | [文档](https://apizero.cn/aidocs/traffic-weather-alert) | [市场](https://apizero.cn/marketplace/traffic-weather-alert) |
-| 56 | webmeta | 网页元数据提取 | 开发工具 | GET | 5 / s | 10000/5000 | B-support | [文档](https://apizero.cn/aidocs/webmeta) | [市场](https://apizero.cn/marketplace/webmeta) |
+| 54 | webmeta | 网页元数据提取 | 开发工具 | GET | 5 / s | 10000/5000 | B-support | [文档](https://apizero.cn/aidocs/webmeta) | [市场](https://apizero.cn/marketplace/webmeta) |
+| 55 | bodyfat | 体脂率与 BMI 计算 | 生活服务 | GET | 20 / s | 200000/100000 | D-inventory | [文档](https://apizero.cn/aidocs/bodyfat) | [市场](https://apizero.cn/marketplace/bodyfat) |
+| 56 | traffic-weather-alert | 限行天气联动 | 生活服务 | GET | 3 / s | 10000/5000 | D-inventory | [文档](https://apizero.cn/aidocs/traffic-weather-alert) | [市场](https://apizero.cn/marketplace/traffic-weather-alert) |
 | 57 | ssl | SSL 证书检测 | 开发工具 | GET | 5 / s | 10000/3000 | B-support | [文档](https://apizero.cn/aidocs/ssl) | [市场](https://apizero.cn/marketplace/ssl) |
 | 58 | idcard-region | 身份证归属地查询 | 身份核验 | GET | 10 / s | 1000/300 | D-inventory | [文档](https://apizero.cn/aidocs/idcard-region) | [市场](https://apizero.cn/marketplace/idcard-region) |
 | 59 | blood-type | 血型遗传查询 | 生活服务 | GET | 20 / s | 20000/10000 | D-inventory | [文档](https://apizero.cn/aidocs/blood-type) | [市场](https://apizero.cn/marketplace/blood-type) |

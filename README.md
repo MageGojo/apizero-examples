@@ -80,9 +80,11 @@ export APIZERO_API_KEY="你的_API_Key"
 
 官网暂时没有后台导出功能，所以这个仓库用公开文档整理了一份可重复生成的接口清单：
 
+- `LLMS.md`：给 AI Agent / RAG / 代码助手读取的调用指南。
 - `data/apis.csv`：表格版，适合导入飞书/Excel 做筛选。
 - `data/apis.json`：结构化版，适合后续做脚本、看板、自动生成 README。
 - `docs/api-inventory.md`：全量 105 个接口清单。
+- `docs/api-details.md`：全量 105 个接口详细内容，包含参数、请求体、响应示例和 cURL 模板。
 - `docs/api-growth-priority.md`：按拉新优先级整理的主推/补充/谨慎接口。
 
 重新生成：
