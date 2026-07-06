@@ -76,6 +76,21 @@ export APIZERO_API_KEY="你的_API_Key"
 - V2EX 求测帖
 - Gitee / GitCode 镜像说明
 
+## 接口导出
+
+官网暂时没有后台导出功能，所以这个仓库用公开文档整理了一份可重复生成的接口清单：
+
+- `data/apis.csv`：表格版，适合导入飞书/Excel 做筛选。
+- `data/apis.json`：结构化版，适合后续做脚本、看板、自动生成 README。
+- `docs/api-inventory.md`：全量 105 个接口清单。
+- `docs/api-growth-priority.md`：按拉新优先级整理的主推/补充/谨慎接口。
+
+重新生成：
+
+```bash
+python scripts/export_interfaces.py
+```
+
 ## 当前主推接口
 
 根据站内近 30 天 API 调用热度，先主推低错误率、高调用量的接口：
