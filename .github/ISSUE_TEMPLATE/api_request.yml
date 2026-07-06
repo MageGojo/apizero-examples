@@ -1,0 +1,20 @@
+name: API example request
+description: Request a new ApiZero example.
+title: "[request] "
+labels: ["example request"]
+body:
+  - type: input
+    id: api
+    attributes:
+      label: API or scenario
+      placeholder: "e.g. DNS lookup, SSL check, invoice OCR"
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: What are you building?
+      placeholder: "Describe the app, script, or workflow."
+    validations:
+      required: true
+

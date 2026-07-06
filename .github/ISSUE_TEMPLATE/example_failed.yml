@@ -1,0 +1,39 @@
+name: Example failed
+description: Report an example that does not run as expected.
+title: "[example failed] "
+labels: ["example failed"]
+body:
+  - type: dropdown
+    id: api
+    attributes:
+      label: API
+      options:
+        - weather
+        - moji-weather
+        - barcode-lookup
+        - barcode-gs1
+        - qq
+        - hot-baidu
+        - movie-box
+        - fund
+        - video-parse
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: Paste the command you ran.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste the error output. Remove API keys before posting.
+      render: text
+    validations:
+      required: true
+

@@ -65,6 +65,17 @@ export APIZERO_API_KEY="你的_API_Key"
 | 基金估值 API | `examples/content` | https://apizero.cn/aidocs/fund |
 | 视频元数据解析排错 | `examples/video-parse` | https://apizero.cn/aidocs/video-parse |
 
+## 平台发布包
+
+`docs/platforms` 里放了下一批平台的发布材料：
+
+- Apifox API Hub 发布包
+- Postman Public API Network 发布包
+- 掘金文章标题和摘要
+- 知乎回答模板
+- V2EX 求测帖
+- Gitee / GitCode 镜像说明
+
 ## 当前主推接口
 
 根据站内近 30 天 API 调用热度，先主推低错误率、高调用量的接口：
