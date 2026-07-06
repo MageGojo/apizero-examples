@@ -96,10 +96,9 @@ export APIZERO_API_KEY="你的_API_Key"
 
 ## CSDN 发文规则
 
-本仓库配套 CSDN 文章草稿在 `docs/csdn`。
+本仓库配套 CSDN 文章草稿在 `docs/csdn`，当前已准备 20 篇稿件和一份发布顺序说明。
 
 - 标题必须包含搜索词，如 `免费天气API`、`商品条码查询API`、`QQ头像API`、`Python`、`Node.js`。
 - 开头 3 行直接给结果，不写平台介绍。
 - 代码必须可复制运行。
 - 每篇只放两个链接：本仓库示例 + 对应官网文档。
-
