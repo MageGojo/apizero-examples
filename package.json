@@ -1,0 +1,17 @@
+{
+  "name": "apizero-examples",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runnable ApiZero API examples for Python and Node.js.",
+  "type": "module",
+  "scripts": {
+    "weather": "node examples/weather/node_weather.mjs",
+    "barcode": "node examples/barcode/node_barcode_lookup.mjs",
+    "qq": "node examples/qq-info/node_qq_info.mjs",
+    "hot": "node examples/content/node_hot_baidu.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+
