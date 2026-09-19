@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 """Export ApiZero public API inventory from the public docs.
 
-The website does not expose an admin export feature yet, so this script builds a
-repeatable export from:
+Current sources (OpenAPI / llms-full 已下线):
 
-- https://apizero.cn/openapi.json
-- https://apizero.cn/aidocs/llms-full.txt
 - https://apizero.cn/sitemap.xml
+- https://apizero.cn/aidocs/{slug}/raw.md
+- https://apizero.cn/llms.txt
 """
 
 from __future__ import annotations
 
 import csv
-import datetime as dt
 import json
-import re
 import sys
-import urllib.request
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from catalog import (  # noqa: E402
+    LLMS_URL,
+    RAW_DOC_TMPL,
+    SITEMAP_URL,
+    build_inventory,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,131 +30,9 @@ DATA_DIR = ROOT / "data"
 DOCS_DIR = ROOT / "docs"
 AI_DOC_PATH = ROOT / "LLMS.md"
 
-OPENAPI_URL = "https://apizero.cn/openapi.json"
-LLMS_FULL_URL = "https://apizero.cn/aidocs/llms-full.txt"
-SITEMAP_URL = "https://apizero.cn/sitemap.xml"
-MARKETPLACE_BASE = "https://apizero.cn/marketplace"
-AIDOCS_BASE = "https://apizero.cn/aidocs"
+OPENAPI_URL = RAW_DOC_TMPL
+LLMS_FULL_URL = LLMS_URL
 
-CATEGORY_LABELS = {
-    "life": "生活服务",
-    "ocrdata": "文档识别",
-    "finance": "金融数据",
-    "ai": "AI 能力",
-    "geo": "地理位置",
-    "kyc": "身份核验",
-    "content": "内容娱乐",
-    "dev": "开发工具",
-}
-
-# From the user's latest Top10 dashboard screenshot / manual read.
-KNOWN_USAGE = {
-    "weather": {"calls_30d": 17379, "errors_30d": 62},
-    "barcode-gs1": {"calls_30d": 1805, "errors_30d": 255},
-    "video-parse": {"calls_30d": 835, "errors_30d": 359},
-    "qq": {"calls_30d": 577, "errors_30d": 19},
-    "moji-weather": {"calls_30d": 441, "errors_30d": 14},
-    "barcode-lookup": {"calls_30d": 164, "errors_30d": None},
-}
-
-GROWTH_OVERRIDES = {
-    "weather": {
-        "tier": "A-core",
-        "action": "主推",
-        "angle": "免费天气 API；城市名直接查；适合小程序、网站天气模块、日报脚本。",
-    },
-    "barcode-lookup": {
-        "tier": "A-core",
-        "action": "主推",
-        "angle": "免费商品条码查询；适合库存录入、电商资料补全、扫码工具。",
-    },
-    "barcode-gs1": {
-        "tier": "A-verify",
-        "action": "验证后主推",
-        "angle": "PRO 商品条码查询；发文前先用真实条码验证，降低新用户复制失败率。",
-    },
-    "qq": {
-        "tier": "A-core",
-        "action": "主推",
-        "angle": "QQ 头像昵称 API；适合头像展示、轻量用户资料补全、网页小工具。",
-    },
-    "moji-weather": {
-        "tier": "A-core",
-        "action": "主推",
-        "angle": "墨迹天气；和 weather 合并做天气专题，对比字段丰富度和使用场景。",
-    },
-    "video-parse": {
-        "tier": "C-caution",
-        "action": "只做排错/合规指南",
-        "angle": "错误率高，暂不作为拉新入口；只讲合法使用、常见错误和可测试输入。",
-    },
-    "hot-baidu": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "百度热搜 API；适合公众号、AI 写作工具、热点选题池。",
-    },
-    "movie-box": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "实时电影票房 API；适合影视数据看板和小项目教程。",
-    },
-    "fund": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "基金估值 API；适合 Python 自用脚本、看板、投资工具教程。",
-    },
-    "bus-realtime": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "实时公交 API；适合城市出行小程序、通勤提醒工具。",
-    },
-    "whois": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "Whois 域名查询；适合站长工具、域名监控、开发者脚本。",
-    },
-    "ssl": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "SSL 证书查询；适合站长工具、证书到期提醒。",
-    },
-    "dns-lookup": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "DNS 查询 API；适合开发者工具、域名诊断、运维脚本。",
-    },
-    "webmeta": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "网页 Meta 信息提取；适合链接预览、采集前预处理、站点分析。",
-    },
-    "content-extract": {
-        "tier": "B-support",
-        "action": "补充推广",
-        "angle": "网页正文提取；适合 RAG、AI 摘要、内容采集前清洗。",
-    },
-}
-
-DEFAULT_GROWTH = {
-    "tier": "D-inventory",
-    "action": "先收录",
-    "angle": "先放入接口库，等站内调用量或搜索需求上来后再写专项内容。",
-}
-
-DEMO_QUERY_PARAMS = {
-    "weather": {"city": "北京", "type": "weather"},
-    "moji-weather": {"city": "北京"},
-    "barcode-lookup": {"barcode": "6921168509256"},
-    "barcode-gs1": {"code": "6921168509256"},
-    "qq": {"qq": "10001"},
-    "hot-baidu": {},
-    "movie-box": {},
-    "fund": {"action": "estimate", "code": "005827"},
-    "whois": {"domain": "apizero.cn"},
-    "ssl": {"domain": "apizero.cn"},
-    "webmeta": {"url": "https://apizero.cn"},
-    "content-extract": {"url": "https://apizero.cn"},
-}
 
 CSV_FIELDS = [
     "index",
@@ -179,333 +60,6 @@ CSV_FIELDS = [
     "known_errors_30d",
     "known_error_rate",
 ]
-
-
-def fetch_text(url: str) -> str:
-    request = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "ApiZeroExamplesExport/1.0 (+https://github.com/MageGojo/apizero-examples)"
-        },
-    )
-    with urllib.request.urlopen(request, timeout=40) as response:
-        return response.read().decode("utf-8")
-
-
-def clean_text(value: str | None) -> str:
-    if not value:
-        return ""
-    value = re.sub(r"\s+", " ", value.replace("\u3000", " ")).strip()
-    return value
-
-
-def parse_free_quota(raw: str) -> tuple[str, str]:
-    if not raw:
-        return "", ""
-    match = re.search(r"(\d+)\s*次（登录用户）\s*·\s*(\d+)\s*次（匿名）", raw)
-    if not match:
-        return "", ""
-    return match.group(1), match.group(2)
-
-
-def parse_llms_full(markdown: str) -> dict[str, dict[str, Any]]:
-    section_re = re.compile(
-        r'<a id="(?P<anchor>[^"]+)"></a>\s+'
-        r"## (?P<index>\d+)\. (?P<name>.*?)\s+`(?P<slug>[^`]+)`"
-        r"(?P<body>.*?)(?=\n---\n\n<a id=|\Z)",
-        re.S,
-    )
-    field_patterns = {
-        "endpoint": r"- \*\*接口地址\*\*: `([^`]+)`",
-        "method": r"- \*\*请求方法\*\*: `([^`]+)`",
-        "category": r"- \*\*分类\*\*: ([^\n]+)",
-        "billing": r"- \*\*计费\*\*: ([^\n]+)",
-        "qps": r"- \*\*QPS\*\*: ([^\n]+)",
-        "free_quota_raw": r"- \*\*每日免费额度\*\*: ([^\n]+)",
-    }
-    docs_re = re.compile(r"- \*\*文档链接\*\*: (\S+)\s+·\s+完整 Markdown: (\S+)")
-
-    parsed: dict[str, dict[str, Any]] = {}
-    for match in section_re.finditer(markdown):
-        body = match.group("body")
-        slug = match.group("slug").strip()
-        item: dict[str, Any] = {
-            "index": int(match.group("index")),
-            "slug": slug,
-            "name": clean_text(match.group("name")),
-        }
-        for key, pattern in field_patterns.items():
-            field_match = re.search(pattern, body)
-            item[key] = clean_text(field_match.group(1)) if field_match else ""
-
-        docs_match = docs_re.search(body)
-        if docs_match:
-            item["docs_url"] = docs_match.group(1)
-            item["raw_docs_url"] = docs_match.group(2)
-
-        logged_in, anonymous = parse_free_quota(item.get("free_quota_raw", ""))
-        item["free_quota_logged_in"] = logged_in
-        item["free_quota_anonymous"] = anonymous
-        parsed[slug] = item
-
-    return parsed
-
-
-def parse_sitemap(xml_text: str) -> set[str]:
-    ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-    urls: set[str] = set()
-    root = ET.fromstring(xml_text)
-    for loc in root.findall(".//sm:loc", ns):
-        if loc.text:
-            urls.add(loc.text.strip())
-    return urls
-
-
-def params_from_operation(operation: dict[str, Any]) -> tuple[str, str, list[dict[str, Any]]]:
-    required: list[str] = []
-    optional: list[str] = []
-    params: list[dict[str, Any]] = []
-
-    for param in operation.get("parameters") or []:
-        if param.get("in") != "query":
-            continue
-        name = param.get("name", "")
-        if name == "key":
-            continue
-        param_info = {
-            "name": name,
-            "required": bool(param.get("required")),
-            "type": param.get("schema", {}).get("type", ""),
-            "description": clean_text(param.get("description", "")),
-        }
-        params.append(param_info)
-        if param_info["required"]:
-            required.append(name)
-        else:
-            optional.append(name)
-
-    return ", ".join(required), ", ".join(optional), params
-
-
-def param_info(param: dict[str, Any]) -> dict[str, Any]:
-    schema = param.get("schema") or {}
-    example = param.get("example")
-    if example is None:
-        example = schema.get("example", "")
-    return {
-        "name": param.get("name", ""),
-        "in": param.get("in", ""),
-        "required": bool(param.get("required")),
-        "type": schema.get("type", ""),
-        "description": clean_text(param.get("description", "")),
-        "example": example,
-    }
-
-
-def split_parameters(operation: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    buckets: dict[str, list[dict[str, Any]]] = {
-        "query": [],
-        "header": [],
-        "path": [],
-        "cookie": [],
-    }
-    for param in operation.get("parameters") or []:
-        info = param_info(param)
-        buckets.setdefault(info["in"], []).append(info)
-    return buckets
-
-
-def schema_fields(schema: dict[str, Any]) -> list[dict[str, Any]]:
-    fields: list[dict[str, Any]] = []
-    properties = schema.get("properties") or {}
-    required = set(schema.get("required") or [])
-    for name, prop in properties.items():
-        fields.append(
-            {
-                "name": name,
-                "required": name in required,
-                "type": prop.get("type", ""),
-                "description": clean_text(prop.get("description", "")),
-                "example": prop.get("example", ""),
-            }
-        )
-    return fields
-
-
-def request_body_from_operation(operation: dict[str, Any]) -> list[dict[str, Any]]:
-    body = operation.get("requestBody") or {}
-    content = body.get("content") or {}
-    bodies: list[dict[str, Any]] = []
-    for content_type, spec in content.items():
-        schema = spec.get("schema") or {}
-        bodies.append(
-            {
-                "content_type": content_type,
-                "required": bool(body.get("required")),
-                "schema_type": schema.get("type", ""),
-                "fields": schema_fields(schema),
-                "example": spec.get("example", ""),
-            }
-        )
-    return bodies
-
-
-def response_examples_from_operation(operation: dict[str, Any]) -> list[dict[str, Any]]:
-    examples: list[dict[str, Any]] = []
-    for status, response in (operation.get("responses") or {}).items():
-        content = response.get("content") or {}
-        for content_type, spec in content.items():
-            example = spec.get("example")
-            if example is None:
-                continue
-            examples.append(
-                {
-                    "status": status,
-                    "content_type": content_type,
-                    "description": clean_text(response.get("description", "")),
-                    "example": example,
-                }
-            )
-    return examples
-
-
-def sample_value(value: Any, fallback: str) -> str:
-    if value is None or value == "":
-        return fallback
-    return str(value)
-
-
-def example_body(body: dict[str, Any]) -> dict[str, Any]:
-    if isinstance(body.get("example"), dict):
-        return body["example"]
-    result: dict[str, Any] = {}
-    for field in body.get("fields", []):
-        result[field["name"]] = sample_value(field.get("example"), f"<{field['name']}>")
-    return result
-
-
-def curl_template(row: dict[str, Any]) -> str:
-    method = row["method"].upper()
-    endpoint = row["endpoint"]
-    has_required_query = any(param.get("required") for param in row.get("query_parameters", []))
-    should_attach_query = method == "GET" or has_required_query
-    demo_params = DEMO_QUERY_PARAMS.get(row["slug"]) if should_attach_query else {}
-    if demo_params is None:
-        query_params = [
-            param
-            for param in row.get("query_parameters", [])
-            if param.get("name") not in {"key"} and param.get("required")
-        ]
-        if not query_params:
-            query_params = [
-                param
-                for param in row.get("query_parameters", [])
-                if param.get("name") not in {"key"}
-            ][:2]
-        demo_params = {
-            param["name"]: sample_value(param.get("example"), "<" + param["name"] + ">")
-            for param in query_params[:4]
-        }
-    if demo_params:
-        query = "&".join(f"{key}={value}" for key, value in demo_params.items())
-        endpoint = f"{endpoint}?{query}"
-
-    lines = [
-        "curl -sS \\",
-        f'  -X {method} \\',
-        '  -H "X-API-Key: $APIZERO_API_KEY" \\',
-    ]
-    bodies = row.get("request_bodies") or []
-    if bodies:
-        body = bodies[0]
-        lines.append(f'  -H "Content-Type: {body["content_type"]}" \\')
-        lines.append(f"  -d '{json.dumps(example_body(body), ensure_ascii=False)}' \\")
-    lines.append(f'  "{endpoint}"')
-    return "\n".join(lines)
-
-
-def error_rate(calls: int | None, errors: int | None) -> str:
-    if not calls or errors is None:
-        return ""
-    return f"{errors / calls:.2%}"
-
-
-def growth_for(slug: str) -> dict[str, str]:
-    return GROWTH_OVERRIDES.get(slug, DEFAULT_GROWTH)
-
-
-def build_inventory() -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    openapi = json.loads(fetch_text(OPENAPI_URL))
-    llms_data = parse_llms_full(fetch_text(LLMS_FULL_URL))
-    sitemap_urls = parse_sitemap(fetch_text(SITEMAP_URL))
-
-    rows: list[dict[str, Any]] = []
-    for path, methods in openapi.get("paths", {}).items():
-        slug = path.removeprefix("/api/")
-        for method, operation in methods.items():
-            docs = llms_data.get(slug, {})
-            required_params, optional_params, params = params_from_operation(operation)
-            parameter_buckets = split_parameters(operation)
-            request_bodies = request_body_from_operation(operation)
-            response_examples = response_examples_from_operation(operation)
-            category = docs.get("category") or (operation.get("tags") or [""])[0]
-            usage = KNOWN_USAGE.get(slug, {})
-            growth = growth_for(slug)
-
-            marketplace_url = f"{MARKETPLACE_BASE}/{slug}"
-            docs_url = docs.get("docs_url") or f"{AIDOCS_BASE}/{slug}"
-            raw_docs_url = docs.get("raw_docs_url") or f"{AIDOCS_BASE}/{slug}/raw.md"
-
-            row: dict[str, Any] = {
-                "index": docs.get("index", 9999),
-                "slug": slug,
-                "name": docs.get("name") or operation.get("summary", slug),
-                "method": docs.get("method") or method.upper(),
-                "endpoint": docs.get("endpoint") or f"https://v1.apizero.cn{path}",
-                "category": category,
-                "category_label": CATEGORY_LABELS.get(category, category),
-                "billing": docs.get("billing", ""),
-                "qps": docs.get("qps", ""),
-                "free_quota_logged_in": docs.get("free_quota_logged_in", ""),
-                "free_quota_anonymous": docs.get("free_quota_anonymous", ""),
-                "required_query_params": required_params,
-                "optional_query_params": optional_params,
-                "marketplace_url": marketplace_url,
-                "docs_url": docs_url,
-                "raw_docs_url": raw_docs_url,
-                "openapi_operation_id": operation.get("operationId", ""),
-                "summary": clean_text(operation.get("description") or operation.get("summary")),
-                "description": (operation.get("description") or operation.get("summary") or "").strip(),
-                "growth_tier": growth["tier"],
-                "growth_action": growth["action"],
-                "promotion_angle": growth["angle"],
-                "known_calls_30d": usage.get("calls_30d", ""),
-                "known_errors_30d": "" if usage.get("errors_30d") is None else usage.get("errors_30d", ""),
-                "known_error_rate": error_rate(usage.get("calls_30d"), usage.get("errors_30d")),
-                "parameters": params,
-                "query_parameters": parameter_buckets.get("query", []),
-                "header_parameters": parameter_buckets.get("header", []),
-                "path_parameters": parameter_buckets.get("path", []),
-                "request_bodies": request_bodies,
-                "response_examples": response_examples,
-            }
-            row["curl_template"] = curl_template(row)
-            if row["marketplace_url"] not in sitemap_urls:
-                row["marketplace_url"] = marketplace_url
-            rows.append(row)
-
-    rows.sort(key=lambda row: (int(row["index"]), row["slug"]))
-    meta = {
-        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-        "sources": {
-            "openapi": OPENAPI_URL,
-            "llms_full": LLMS_FULL_URL,
-            "sitemap": SITEMAP_URL,
-        },
-        "api_count": len(rows),
-    }
-    return rows, meta
-
 
 def csv_row(row: dict[str, Any]) -> dict[str, Any]:
     return {key: row.get(key, "") for key in CSV_FIELDS}
@@ -573,9 +127,9 @@ def write_inventory_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], p
 
 数据源：
 
-- OpenAPI：{OPENAPI_URL}
-- LLM 完整文档：{LLMS_FULL_URL}
 - Sitemap：{SITEMAP_URL}
+- 单接口 Markdown：{OPENAPI_URL}
+- LLM 索引：{LLMS_FULL_URL}
 
 ## 分类统计
 
@@ -645,8 +199,10 @@ def write_growth_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], path
 1. 天气专题：`weather` + `moji-weather`，主打“免费天气 API / Python / Node.js / 小程序后端”。
 2. 条码专题：`barcode-lookup` + `barcode-gs1`，主打“商品条码查询 API / 扫码录入 / 电商资料补全”。
 3. 开发者工具专题：`whois`、`dns-lookup`、`ssl`、`webmeta`、`content-extract`，适合 GitHub Topic、掘金、V2EX、站长群。
-4. 内容工具专题：`hot-baidu`、`movie-box`、`fund`，适合“AI 选题池 / 数据看板 / Python 小项目”。
-5. 视频解析：只保留合法使用和错误排查，不在标题里承诺稳定生产可用。
+4. 内容工具专题：`hot-baidu`、`movie-box`、`fund`、`football`、`basketball`，适合“AI 选题池 / 数据看板 / Python 小项目”。
+5. 新增生活接口：`drug-insert`、`express-pro`、`stock-trend`，适合健康工具、物流看板、行情入门。
+6. 大模型：`ai-chat` 统一 Completions 地址；`ai-video` 无免费额度，先收录。
+7. 视频解析 / 抖音作品与搜索：只保留合法使用和错误排查，不在标题里承诺稳定生产可用。
 """
     path.write_text(content, encoding="utf-8")
 
@@ -875,7 +431,7 @@ def write_ai_calling_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], 
 
 1. 优先按用户需求搜索 `slug`、接口名、分类和推广角度。
 2. 生成代码时默认使用 `https://v1.apizero.cn` 网关。
-3. 推荐鉴权方式：Header `X-API-Key: $APIZERO_API_KEY`。匿名额度只适合测试。
+3. 推荐鉴权方式：Header `Authorization: Bearer $APIZERO_API_KEY`（兼容 `X-API-Key`）。匿名额度只适合测试。
 4. 每次只推荐一个最匹配接口，不要泛泛介绍“平台有很多 API”。
 5. 对 `C-caution` 接口只写合法使用和排错，不承诺稳定生产可用。
 6. 需要完整参数、请求体和响应示例时，读取 `docs/api-details.md`。
@@ -890,7 +446,7 @@ def write_ai_calling_markdown(rows: list[dict[str, Any]], meta: dict[str, Any], 
 
 ## 鉴权与错误处理
 
-- Header：`X-API-Key: $APIZERO_API_KEY`
+- Header：`Authorization: Bearer $APIZERO_API_KEY`（兼容 `X-API-Key`）
 - Query：部分接口兼容 `?key=YOUR_API_KEY`
 - 常见错误：`401`/`4015` 多为 Key 缺失或无效；`429`/`4029`/`4030` 多为 QPS 或每日额度触发；`400` 多为参数错误；`502` 多为上游异常。
 - 正式示例里建议提醒用户先设置环境变量：`export APIZERO_API_KEY="你的_API_Key"`。

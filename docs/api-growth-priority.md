@@ -1,6 +1,6 @@
 # ApiZero 接口增长优先级
 
-生成时间：`2026-07-06T08:41:35+00:00`
+生成时间：`2026-09-19T00:50:53+00:00`
 
 这份表把全量接口按“现在适不适合拿出去拉新人”分层。站内已有调用量的接口优先看真实调用和错误率；没有调用量的接口先收录，不急着写大量内容。
 
@@ -18,24 +18,34 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-core | weather | 彩云天气 | 17379 | 0.36% | 主推 | 免费天气 API；城市名直接查；适合小程序、网站天气模块、日报脚本。 | [demo/docs](https://apizero.cn/aidocs/weather) |
 | A-core | qq | QQ 信息 | 577 | 3.29% | 主推 | QQ 头像昵称 API；适合头像展示、轻量用户资料补全、网页小工具。 | [demo/docs](https://apizero.cn/aidocs/qq) |
-| A-core | moji-weather | 墨迹天气 | 441 | 3.17% | 主推 | 墨迹天气；和 weather 合并做天气专题，对比字段丰富度和使用场景。 | [demo/docs](https://apizero.cn/aidocs/moji-weather) |
+| A-core | moji-weather | 天气查询 | 441 | 3.17% | 主推 | 墨迹天气；和 weather 合并做天气专题，对比字段丰富度和使用场景。 | [demo/docs](https://apizero.cn/aidocs/moji-weather) |
 | A-core | barcode-lookup | 商品条码查询-免费版 | 164 |  | 主推 | 免费商品条码查询；适合库存录入、电商资料补全、扫码工具。 | [demo/docs](https://apizero.cn/aidocs/barcode-lookup) |
 | A-verify | barcode-gs1 | 商品条码查询PRO | 1805 | 14.13% | 验证后主推 | PRO 商品条码查询；发文前先用真实条码验证，降低新用户复制失败率。 | [demo/docs](https://apizero.cn/aidocs/barcode-gs1) |
-| B-support | hot-baidu | 百度热搜榜 |  |  | 补充推广 | 百度热搜 API；适合公众号、AI 写作工具、热点选题池。 | [demo/docs](https://apizero.cn/aidocs/hot-baidu) |
+| B-support | bus-realtime | 实时公交到站 |  |  | 补充推广 | 实时公交 API；适合城市出行小程序、通勤提醒工具。 | [demo/docs](https://apizero.cn/aidocs/bus-realtime) |
+| B-support | stock-trend | A股实时行情 |  |  | 补充推广 | A股实时行情；免费额度可跑通，适合行情看板和量化入门。 | [demo/docs](https://apizero.cn/aidocs/stock-trend) |
 | B-support | movie-box | 实时电影票房 |  |  | 补充推广 | 实时电影票房 API；适合影视数据看板和小项目教程。 | [demo/docs](https://apizero.cn/aidocs/movie-box) |
+| B-support | hot-baidu | 百度热搜榜 |  |  | 补充推广 | 百度热搜 API；适合公众号、AI 写作工具、热点选题池。 | [demo/docs](https://apizero.cn/aidocs/hot-baidu) |
+| B-support | content-extract | 网页正文提取 |  |  | 补充推广 | 网页正文提取；适合 RAG、AI 摘要、内容采集前清洗。 | [demo/docs](https://apizero.cn/aidocs/content-extract) |
 | B-support | whois | Whois 域名查询 |  |  | 补充推广 | Whois 域名查询；适合站长工具、域名监控、开发者脚本。 | [demo/docs](https://apizero.cn/aidocs/whois) |
 | B-support | fund | 基金估值跟踪 |  |  | 补充推广 | 基金估值 API；适合 Python 自用脚本、看板、投资工具教程。 | [demo/docs](https://apizero.cn/aidocs/fund) |
-| B-support | content-extract | 网页正文提取 |  |  | 补充推广 | 网页正文提取；适合 RAG、AI 摘要、内容采集前清洗。 | [demo/docs](https://apizero.cn/aidocs/content-extract) |
-| B-support | bus-realtime | 实时公交到站 |  |  | 补充推广 | 实时公交 API；适合城市出行小程序、通勤提醒工具。 | [demo/docs](https://apizero.cn/aidocs/bus-realtime) |
-| B-support | webmeta | 网页元数据提取 |  |  | 补充推广 | 网页 Meta 信息提取；适合链接预览、采集前预处理、站点分析。 | [demo/docs](https://apizero.cn/aidocs/webmeta) |
+| B-support | express-pro | 快递查询PRO |  |  | 补充推广 | 快递查询 PRO；可不传公司自动识别，适合物流看板。 | [demo/docs](https://apizero.cn/aidocs/express-pro) |
+| B-support | ai-chat | 大模型 |  |  | 补充推广 | 大模型统一网关；对话/生图/视频同一 Completions 地址，默认经济档。 | [demo/docs](https://apizero.cn/aidocs/ai-chat) |
 | B-support | ssl | SSL 证书检测 |  |  | 补充推广 | SSL 证书查询；适合站长工具、证书到期提醒。 | [demo/docs](https://apizero.cn/aidocs/ssl) |
+| B-support | webmeta | 网页元数据提取 |  |  | 补充推广 | 网页 Meta 信息提取；适合链接预览、采集前预处理、站点分析。 | [demo/docs](https://apizero.cn/aidocs/webmeta) |
+| B-support | football | 足球赛事 |  |  | 补充推广 | 足球赛事赛程；适合比分看板和赛程提醒。 | [demo/docs](https://apizero.cn/aidocs/football) |
+| B-support | basketball | 篮球赛事 |  |  | 补充推广 | 篮球赛事赛程；适合 NBA/CBA 看板。 | [demo/docs](https://apizero.cn/aidocs/basketball) |
+| B-support | drug-insert | 药品说明书查询 |  |  | 补充推广 | 药品说明书查询；先搜名称再拉详情，适合健康工具教程。 | [demo/docs](https://apizero.cn/aidocs/drug-insert) |
 | B-support | dns-lookup | DNS 查询 |  |  | 补充推广 | DNS 查询 API；适合开发者工具、域名诊断、运维脚本。 | [demo/docs](https://apizero.cn/aidocs/dns-lookup) |
 | C-caution | video-parse | 全平台视频元数据解析服务 | 835 | 42.99% | 只做排错/合规指南 | 错误率高，暂不作为拉新入口；只讲合法使用、常见错误和可测试输入。 | [demo/docs](https://apizero.cn/aidocs/video-parse) |
+| C-caution | douyin-works | 抖音用户作品 |  |  | 只做排错/合规指南 | 抖音作品列表对登录态和链接格式敏感，不作为拉新入口。 | [demo/docs](https://apizero.cn/aidocs/douyin-works) |
+| C-caution | douyin-search | 抖音视频搜索 |  |  | 只做排错/合规指南 | 抖音搜索对输入和平台策略敏感，只讲合法查询和常见错误。 | [demo/docs](https://apizero.cn/aidocs/douyin-search) |
 
 ## 下一步内容矩阵
 
 1. 天气专题：`weather` + `moji-weather`，主打“免费天气 API / Python / Node.js / 小程序后端”。
 2. 条码专题：`barcode-lookup` + `barcode-gs1`，主打“商品条码查询 API / 扫码录入 / 电商资料补全”。
 3. 开发者工具专题：`whois`、`dns-lookup`、`ssl`、`webmeta`、`content-extract`，适合 GitHub Topic、掘金、V2EX、站长群。
-4. 内容工具专题：`hot-baidu`、`movie-box`、`fund`，适合“AI 选题池 / 数据看板 / Python 小项目”。
-5. 视频解析：只保留合法使用和错误排查，不在标题里承诺稳定生产可用。
+4. 内容工具专题：`hot-baidu`、`movie-box`、`fund`、`football`、`basketball`，适合“AI 选题池 / 数据看板 / Python 小项目”。
+5. 新增生活接口：`drug-insert`、`express-pro`、`stock-trend`，适合健康工具、物流看板、行情入门。
+6. 大模型：`ai-chat` 统一 Completions 地址；`ai-video` 无免费额度，先收录。
+7. 视频解析 / 抖音作品与搜索：只保留合法使用和错误排查，不在标题里承诺稳定生产可用。

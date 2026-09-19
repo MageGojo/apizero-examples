@@ -29,6 +29,8 @@ pip install -r requirements.txt
 python examples/weather/python_weather.py
 python examples/barcode/python_barcode_lookup.py
 python examples/qq-info/python_qq_info.py
+python examples/drug-insert/python_drug_insert.py
+python examples/stock/python_stock_trend.py
 ```
 
 ### Node.js
@@ -64,6 +66,9 @@ export APIZERO_API_KEY="你的_API_Key"
 | 实时电影票房 API | `examples/content` | https://apizero.cn/aidocs/movie-box |
 | 基金估值 API | `examples/content` | https://apizero.cn/aidocs/fund |
 | 视频元数据解析排错 | `examples/video-parse` | https://apizero.cn/aidocs/video-parse |
+| 药品说明书查询 | `examples/drug-insert` | https://apizero.cn/aidocs/drug-insert |
+| A股实时行情 | `examples/stock` | https://apizero.cn/aidocs/stock-trend |
+| 足球赛事 | `examples/content` | https://apizero.cn/aidocs/football |
 
 ## 平台发布包
 
@@ -78,13 +83,13 @@ export APIZERO_API_KEY="你的_API_Key"
 
 ## 接口导出
 
-官网暂时没有后台导出功能，所以这个仓库用公开文档整理了一份可重复生成的接口清单：
+官网 OpenAPI / llms-full 已下线，所以这个仓库按商城 sitemap + 各接口 `raw.md` 整理一份可重复生成的清单：
 
 - `LLMS.md`：给 AI Agent / RAG / 代码助手读取的调用指南。
 - `data/apis.csv`：表格版，适合导入飞书/Excel 做筛选。
 - `data/apis.json`：结构化版，适合后续做脚本、看板、自动生成 README。
-- `docs/api-inventory.md`：全量 105 个接口清单。
-- `docs/api-details.md`：全量 105 个接口详细内容，包含参数、请求体、响应示例和 cURL 模板。
+- `docs/api-inventory.md`：全量接口清单（现网 118 个）。
+- `docs/api-details.md`：全量接口详细内容，包含参数、请求体、响应示例和 cURL 模板。
 - `docs/api-growth-priority.md`：按拉新优先级整理的主推/补充/谨慎接口。
 
 重新生成：

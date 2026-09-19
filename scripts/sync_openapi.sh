@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
+# OpenAPI 已下线。现在用 sitemap + raw.md 重导接口清单。
 set -euo pipefail
-
-mkdir -p openapi
-curl -fsSL "https://apizero.cn/openapi.json" -o openapi/apizero-openapi.json
-echo "Saved openapi/apizero-openapi.json"
-
+cd "$(dirname "$0")/.."
+python3 scripts/export_interfaces.py

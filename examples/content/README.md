@@ -5,6 +5,7 @@
 - 百度热搜：公众号选题、AI 写作热点池、资讯模块。
 - 实时电影票房：影视数据看板、小程序榜单。
 - 基金估值：个人投资脚本、基金估值提醒。
+- 足球赛事：今日赛程 / 比分看板。
 
 ## 运行
 
@@ -13,5 +14,6 @@ python examples/content/python_hot_baidu.py
 node examples/content/node_hot_baidu.mjs
 python examples/content/python_movie_box.py
 python examples/content/python_fund.py
+python examples/content/python_football.py
 ```
 
