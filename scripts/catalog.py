@@ -41,6 +41,7 @@ CATEGORY_FROM_LABEL = {
     "身份核验": "kyc",
     "内容娱乐": "content",
     "开发工具": "dev",
+    "招中标": "tender",
 }
 
 CATEGORY_LABELS = {code: label for label, code in CATEGORY_FROM_LABEL.items()}
@@ -592,6 +593,29 @@ def build_inventory() -> tuple[list[dict[str, Any]], dict[str, Any]]:
                 "drug-insert",
                 "ocr-text-box",
                 "ai-video",
+                "tender-files",
+                "company-contacts",
+                "tender-search",
+                "tender-number",
+                "tender-rewrite",
+                "tender-extract",
+                "planned-search",
+                "tender-contract",
+                "tender-source",
+                "tender-site",
+                "tender-search-ai",
+                "planned-files",
+                "tender-company",
+                "tender-detail-ai",
+                "tender-classify",
+                "tender-category",
+                "company-customers",
+                "company-stats",
+                "history-today",
+                "tender-detail",
+                "tender-structure",
+                "planned-detail",
+                "company-suppliers",
             )
             if slug in parsed
         ],

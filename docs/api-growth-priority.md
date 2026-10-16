@@ -1,6 +1,6 @@
 # ApiZero 接口增长优先级
 
-生成时间：`2026-09-19T00:50:53+00:00`
+生成时间：`2026-10-16T02:34:40+00:00`
 
 这份表把全量接口按“现在适不适合拿出去拉新人”分层。站内已有调用量的接口优先看真实调用和错误率；没有调用量的接口先收录，不急着写大量内容。
 
@@ -26,15 +26,15 @@
 | B-support | movie-box | 实时电影票房 |  |  | 补充推广 | 实时电影票房 API；适合影视数据看板和小项目教程。 | [demo/docs](https://apizero.cn/aidocs/movie-box) |
 | B-support | hot-baidu | 百度热搜榜 |  |  | 补充推广 | 百度热搜 API；适合公众号、AI 写作工具、热点选题池。 | [demo/docs](https://apizero.cn/aidocs/hot-baidu) |
 | B-support | content-extract | 网页正文提取 |  |  | 补充推广 | 网页正文提取；适合 RAG、AI 摘要、内容采集前清洗。 | [demo/docs](https://apizero.cn/aidocs/content-extract) |
-| B-support | whois | Whois 域名查询 |  |  | 补充推广 | Whois 域名查询；适合站长工具、域名监控、开发者脚本。 | [demo/docs](https://apizero.cn/aidocs/whois) |
-| B-support | fund | 基金估值跟踪 |  |  | 补充推广 | 基金估值 API；适合 Python 自用脚本、看板、投资工具教程。 | [demo/docs](https://apizero.cn/aidocs/fund) |
 | B-support | express-pro | 快递查询PRO |  |  | 补充推广 | 快递查询 PRO；可不传公司自动识别，适合物流看板。 | [demo/docs](https://apizero.cn/aidocs/express-pro) |
+| B-support | fund | 基金估值跟踪 |  |  | 补充推广 | 基金估值 API；适合 Python 自用脚本、看板、投资工具教程。 | [demo/docs](https://apizero.cn/aidocs/fund) |
+| B-support | whois | Whois 域名查询 |  |  | 补充推广 | Whois 域名查询；适合站长工具、域名监控、开发者脚本。 | [demo/docs](https://apizero.cn/aidocs/whois) |
 | B-support | ai-chat | 大模型 |  |  | 补充推广 | 大模型统一网关；对话/生图/视频同一 Completions 地址，默认经济档。 | [demo/docs](https://apizero.cn/aidocs/ai-chat) |
-| B-support | ssl | SSL 证书检测 |  |  | 补充推广 | SSL 证书查询；适合站长工具、证书到期提醒。 | [demo/docs](https://apizero.cn/aidocs/ssl) |
-| B-support | webmeta | 网页元数据提取 |  |  | 补充推广 | 网页 Meta 信息提取；适合链接预览、采集前预处理、站点分析。 | [demo/docs](https://apizero.cn/aidocs/webmeta) |
 | B-support | football | 足球赛事 |  |  | 补充推广 | 足球赛事赛程；适合比分看板和赛程提醒。 | [demo/docs](https://apizero.cn/aidocs/football) |
-| B-support | basketball | 篮球赛事 |  |  | 补充推广 | 篮球赛事赛程；适合 NBA/CBA 看板。 | [demo/docs](https://apizero.cn/aidocs/basketball) |
+| B-support | ssl | SSL 证书检测 |  |  | 补充推广 | SSL 证书查询；适合站长工具、证书到期提醒。 | [demo/docs](https://apizero.cn/aidocs/ssl) |
 | B-support | drug-insert | 药品说明书查询 |  |  | 补充推广 | 药品说明书查询；先搜名称再拉详情，适合健康工具教程。 | [demo/docs](https://apizero.cn/aidocs/drug-insert) |
+| B-support | webmeta | 网页元数据提取 |  |  | 补充推广 | 网页 Meta 信息提取；适合链接预览、采集前预处理、站点分析。 | [demo/docs](https://apizero.cn/aidocs/webmeta) |
+| B-support | basketball | 篮球赛事 |  |  | 补充推广 | 篮球赛事赛程；适合 NBA/CBA 看板。 | [demo/docs](https://apizero.cn/aidocs/basketball) |
 | B-support | dns-lookup | DNS 查询 |  |  | 补充推广 | DNS 查询 API；适合开发者工具、域名诊断、运维脚本。 | [demo/docs](https://apizero.cn/aidocs/dns-lookup) |
 | C-caution | video-parse | 全平台视频元数据解析服务 | 835 | 42.99% | 只做排错/合规指南 | 错误率高，暂不作为拉新入口；只讲合法使用、常见错误和可测试输入。 | [demo/docs](https://apizero.cn/aidocs/video-parse) |
 | C-caution | douyin-works | 抖音用户作品 |  |  | 只做排错/合规指南 | 抖音作品列表对登录态和链接格式敏感，不作为拉新入口。 | [demo/docs](https://apizero.cn/aidocs/douyin-works) |
